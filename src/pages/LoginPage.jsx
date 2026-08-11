@@ -3,7 +3,7 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle, LogIn, Activity, RefreshCw } from
 import { loginUser } from '../services/authService';
 import { isFirebaseConfigured } from '../firebase/config';
 
-export default function LoginPage({ onLoginSuccess }) {
+export default function LoginPage({ onLoginSuccess, onGoToSignUp }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -219,6 +219,31 @@ export default function LoginPage({ onLoginSuccess }) {
               )}
             </button>
           </form>
+          {/* Link to Sign Up */}
+          <div style={{
+            textAlign: 'center',
+            marginTop: '22px',
+            fontSize: '0.82rem',
+            color: 'var(--text-secondary)'
+          }}>
+            Don&apos;t have an account?{' '}
+            <button
+              onClick={onGoToSignUp}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--accent-green-bright)',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                padding: 0,
+                textDecoration: 'underline',
+                textUnderlineOffset: '2px'
+              }}
+            >
+              Create Account
+            </button>
+          </div>
         </div>
 
         {/* Footer */}

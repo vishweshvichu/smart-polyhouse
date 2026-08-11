@@ -10,6 +10,7 @@ import Maintenance from './pages/Maintenance';
 import Alerts from './pages/Alerts';
 import Settings from './pages/Settings';
 import LoginPage from './pages/LoginPage';
+import SignUpPage from './pages/SignUpPage';
 
 import { Activity } from 'lucide-react';
 
@@ -31,6 +32,7 @@ export default function App() {
   const getTabFromPath = () => {
     const path = window.location.pathname;
     if (path === '/login') return 'login';
+    if (path === '/signup') return 'signup';
     if (path === '/analytics') return 'analytics';
     if (path === '/maintenance') return 'maintenance';
     if (path === '/plants') return 'plants';
@@ -186,12 +188,16 @@ export default function App() {
     if (authLoading) return;
 
     if (!currentUser && !isDemoMode) {
-      if (window.location.pathname !== '/login') {
+      // Allow /login and /signup when not authenticated
+      const path = window.location.pathname;
+      if (path !== '/login' && path !== '/signup') {
         window.history.replaceState(null, '', '/login');
       }
-      setActiveTab('login');
+      if (activeTab !== 'signup') {
+        setActiveTab(path === '/signup' ? 'signup' : 'login');
+      }
     } else if (currentUser || isDemoMode) {
-      if (activeTab === 'login') {
+      if (activeTab === 'login' || activeTab === 'signup') {
         window.history.replaceState(null, '', '/');
         setActiveTab('dashboard');
       } else {
@@ -346,15 +352,36 @@ export default function App() {
     );
   }
 
-  if (activeTab === 'login' || (!currentUser && !isDemoMode)) {
+  if (activeTab === 'login' || activeTab === 'signup' || (!currentUser && !isDemoMode)) {
+    if (activeTab === 'signup') {
+      return (
+        <SignUpPage
+          onSignUpSuccess={(user) => {
+            setCurrentUser(user);
+            setIsDemoMode(false);
+            setLoginNotification('success');
+            setTimeout(() => setLoginNotification(null), 4000);
+            navigateTo('dashboard');
+          }}
+          onGoToLogin={() => {
+            window.history.replaceState(null, '', '/login');
+            setActiveTab('login');
+          }}
+        />
+      );
+    }
     return (
-      <LoginPage 
+      <LoginPage
         onLoginSuccess={(user) => {
           setCurrentUser(user);
           setIsDemoMode(false);
           setLoginNotification('success');
           setTimeout(() => setLoginNotification(null), 4000);
           navigateTo('dashboard');
+        }}
+        onGoToSignUp={() => {
+          window.history.replaceState(null, '', '/signup');
+          setActiveTab('signup');
         }}
       />
     );
