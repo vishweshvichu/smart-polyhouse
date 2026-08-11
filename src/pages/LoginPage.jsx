@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, LogIn, Activity, RefreshCw, Play } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, LogIn, Activity, RefreshCw } from 'lucide-react';
 import { loginUser } from '../services/authService';
 import { isFirebaseConfigured } from '../firebase/config';
 
-export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
+export default function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +24,6 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
       onLoginSuccess(user);
     } catch (err) {
       console.error("Login failure:", err);
-      // Map common error codes to clean user-facing text
       let friendlyMessage = "Failed to sign in. Please verify connection and database permissions.";
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
         friendlyMessage = "Invalid email or password. Verify your entries.";
@@ -128,7 +127,7 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Sentinel Ingress Email</label>
+              <label className="form-label">Email Address</label>
               <div style={{ position: 'relative' }}>
                 <input
                   type="email"
@@ -139,6 +138,7 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
                   disabled={loading}
                   style={{ paddingLeft: '38px', borderRadius: 'var(--radius-sm)' }}
                   required
+                  autoComplete="email"
                 />
                 <Mail size={16} style={{
                   position: 'absolute',
@@ -151,7 +151,7 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Sentinel Access Password</label>
+              <label className="form-label">Password</label>
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -162,6 +162,7 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
                   disabled={loading}
                   style={{ paddingLeft: '38px', paddingRight: '38px', borderRadius: 'var(--radius-sm)' }}
                   required
+                  autoComplete="current-password"
                 />
                 <Lock size={16} style={{
                   position: 'absolute',
@@ -186,6 +187,7 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
                     alignItems: 'center',
                     padding: 0
                   }}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -196,6 +198,7 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
               type="submit"
               className="btn-primary"
               disabled={loading}
+              id="login-submit-btn"
               style={{
                 width: '100%',
                 justifyContent: 'center',
@@ -207,53 +210,18 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
             >
               {loading ? (
                 <>
-                  <RefreshCw size={18} className="spin" /> Verifying Sentinel Keys...
+                  <RefreshCw size={18} className="spin" /> Verifying...
                 </>
               ) : (
                 <>
-                  <LogIn size={18} /> Authenticate Ingress
+                  <LogIn size={18} /> Sign In
                 </>
               )}
             </button>
           </form>
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            margin: '20px 0',
-            color: 'var(--text-muted)',
-            fontSize: '0.75rem'
-          }}>
-            <div style={{ flexGrow: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }}></div>
-            <span style={{ padding: '0 10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Alternative Access</span>
-            <div style={{ flexGrow: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }}></div>
-          </div>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={onGuestLogin}
-            disabled={loading}
-            style={{
-              width: '100%',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '11px',
-              fontSize: '0.85rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(255, 145, 0, 0.08)',
-              border: '1px solid rgba(255, 145, 0, 0.3)',
-              color: 'var(--accent-amber)',
-              cursor: 'pointer'
-            }}
-          >
-            <Play size={16} /> Enter Interactive Demo Simulator
-          </button>
         </div>
 
-        {/* Footer Notes */}
+        {/* Footer */}
         <div style={{
           textAlign: 'center',
           marginTop: '20px',
@@ -261,11 +229,10 @@ export default function LoginPage({ onLoginSuccess, onGuestLogin }) {
           color: 'var(--text-muted)',
           lineHeight: '1.4'
         }}>
-          Protected by Firebase Authentication Guard.
-          <br />
+          Protected by Firebase Authentication.
           {!isFirebaseConfigured && (
-            <span style={{ color: 'var(--accent-amber)', fontWeight: 600 }}>
-              * Fallback Offline mode active: Firebase parameters are simulated.
+            <span style={{ color: 'var(--accent-amber)', fontWeight: 600, display: 'block', marginTop: '4px' }}>
+              ⚠ Firebase not configured — check environment variables.
             </span>
           )}
         </div>

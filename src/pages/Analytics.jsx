@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import SensorTrendChart from '../charts/SensorTrendChart';
 import RuntimeBarChart from '../charts/RuntimeBarChart';
-import { BarChart3, Calendar, Filter, Download, Database, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
+
 
 export default function Analytics({ 
-  historicalData,
-  isRecording,
-  recordFeedback,
-  onRecordTestReading
+  historicalData
 }) {
   const [timeFilter, setTimeFilter] = useState('7d'); // 'today', '7d', '30d'
 
@@ -78,36 +76,6 @@ export default function Analytics({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <button
-            id="record-test-reading-analytics"
-            className="btn-secondary"
-            onClick={onRecordTestReading}
-            disabled={isRecording}
-            style={{
-              fontSize: '0.78rem',
-              padding: '8px 14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600,
-              background: 'rgba(52, 152, 219, 0.15)',
-              border: '1px solid rgba(52, 152, 219, 0.4)',
-              color: '#3498db',
-              cursor: 'pointer',
-              borderRadius: 'var(--radius-sm)'
-            }}
-          >
-            {isRecording ? (
-              <>
-                <RefreshCw size={14} className="spin" /> Recording...
-              </>
-            ) : (
-              <>
-                <Database size={14} /> Record Test Reading
-              </>
-            )}
-          </button>
-
           <div className="filter-group">
             <button 
               className={`filter-btn ${timeFilter === 'today' ? 'active' : ''}`}
@@ -168,36 +136,7 @@ export default function Analytics({
         </div>
       </div>
 
-      {/* Analytics Test Record Inline Feedback */}
-      {recordFeedback && (
-        <div style={{
-          background: recordFeedback.type === 'success' ? 'rgba(52, 152, 219, 0.12)' : 'rgba(231, 76, 60, 0.15)',
-          border: `1px solid ${recordFeedback.type === 'success' ? 'rgba(52, 152, 219, 0.4)' : 'rgba(231, 76, 60, 0.4)'}`,
-          borderRadius: 'var(--radius-md)',
-          padding: '12px 18px',
-          fontSize: '0.86rem',
-          marginBottom: '20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          color: recordFeedback.type === 'success' ? '#3498db' : '#e74c3c'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {recordFeedback.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-            <div>
-              <strong>{recordFeedback.message}</strong>
-              {recordFeedback.payload && (
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-                  Payload: {JSON.stringify(recordFeedback.payload)}
-                </div>
-              )}
-            </div>
-          </div>
-          <span style={{ fontSize: '0.74rem', opacity: 0.8 }}>{recordFeedback.time}</span>
-        </div>
-      )}
 
-      {/* Historical Data Table */}
       <div className="card">
         <div className="card-header">
           <div>

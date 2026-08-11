@@ -71,6 +71,9 @@ export default function App() {
   const [isESP32Online, setIsESP32Online] = useState(false);
   const [lastSeenSeconds, setLastSeenSeconds] = useState(null);
 
+  // One-time login success notification
+  const [loginNotification, setLoginNotification] = useState(null);
+
   const [historicalData, setHistoricalData] = useState([]);
   const [maintenanceStats, setMaintenanceStats] = useState({
     fan: { totalRuntime: 0, dailyRuntime: 0, totalActivations: 0, dailyActivations: 0 },
@@ -349,10 +352,8 @@ export default function App() {
         onLoginSuccess={(user) => {
           setCurrentUser(user);
           setIsDemoMode(false);
-          navigateTo('dashboard');
-        }}
-        onGuestLogin={() => {
-          setIsDemoMode(true);
+          setLoginNotification('success');
+          setTimeout(() => setLoginNotification(null), 4000);
           navigateTo('dashboard');
         }}
       />
@@ -360,83 +361,112 @@ export default function App() {
   }
 
   return (
-    <div className="app-container">
-      {/* Sidebar Navigation */}
-      <Navbar 
-        activeTab={activeTab} 
-        setActiveTab={navigateTo} 
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
-        alertCount={liveData.temperature > 31 || liveData.soilMoisture < 30 ? 1 : 0}
-        onLogout={handleLogout}
-      />
+    <>
+      {/* One-time login success toast */}
+      {loginNotification === 'success' && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 9999,
+          background: 'rgba(18, 40, 24, 0.97)',
+          border: '1px solid rgba(46, 204, 113, 0.5)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(46,204,113,0.15)',
+          animation: 'slideInRight 0.35s ease',
+          maxWidth: '340px',
+          width: 'calc(100vw - 40px)'
+        }}>
+          <span style={{
+            width: '8px', height: '8px', borderRadius: '50%',
+            background: 'var(--accent-green-bright)',
+            boxShadow: '0 0 10px var(--accent-green-bright)',
+            flexShrink: 0
+          }} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>
+              Smart Polyhouse connected successfully.
+            </div>
+            <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Live monitoring is active.
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Main Content Area */}
-      <div className="main-wrapper">
-        <Header 
-          title={currentTitle.title}
-          subtitle={currentTitle.subtitle}
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          selectedPlant={selectedPlant}
-          setSelectedPlant={setSelectedPlant}
-          isDemoMode={isDemoMode}
-          setIsDemoMode={setIsDemoMode}
-          lastUpdated={liveData.timestamp}
-          esp32Online={liveData.esp32Online}
+      <div className="app-container">
+        {/* Sidebar Navigation */}
+        <Navbar 
+          activeTab={activeTab} 
+          setActiveTab={navigateTo} 
+          isOpen={sidebarOpen}
+          setIsOpen={setSidebarOpen}
+          alertCount={liveData.temperature > 31 || liveData.soilMoisture < 30 ? 1 : 0}
+          onLogout={handleLogout}
         />
 
-        <main className="content-container">
-          {/* Realtime Firebase Connection Status Banner */}
-          <FirebaseStatusBanner 
-            isDemoMode={isDemoMode}
-            setIsDemoMode={setIsDemoMode}
-            isLoading={isLoading}
-            firebaseError={firebaseError}
-            isRecording={isRecording}
-            recordFeedback={recordFeedback}
-            onRecordTestReading={handleRecordTestReading}
+        {/* Main Content Area */}
+        <div className="main-wrapper">
+          <Header 
+            title={currentTitle.title}
+            subtitle={currentTitle.subtitle}
+            toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            selectedPlant={selectedPlant}
+            setSelectedPlant={setSelectedPlant}
+            lastUpdated={liveData.timestamp}
+            esp32Online={isESP32Online}
           />
 
-          {activeTab === 'dashboard' && (
-            <Dashboard 
-              liveData={liveData} 
-              historicalData={historicalData} 
-              maintenanceStats={maintenanceStats}
+          <main className="content-container">
+            {/* Firebase Connection Status Banner */}
+            <FirebaseStatusBanner 
               isDemoMode={isDemoMode}
-              isRecording={isRecording}
-              recordFeedback={recordFeedback}
-              onRecordTestReading={handleRecordTestReading}
-              isESP32Online={isESP32Online}
-              lastSeenSeconds={lastSeenSeconds}
+              isLoading={isLoading}
+              firebaseError={firebaseError}
             />
-          )}
 
-          {activeTab === 'analytics' && (
-            <Analytics 
-              historicalData={historicalData} 
-              isRecording={isRecording}
-              recordFeedback={recordFeedback}
-              onRecordTestReading={handleRecordTestReading}
-            />
-          )}
+            {activeTab === 'dashboard' && (
+              <Dashboard 
+                liveData={liveData} 
+                historicalData={historicalData} 
+                maintenanceStats={maintenanceStats}
+                isDemoMode={isDemoMode}
+                isRecording={isRecording}
+                recordFeedback={recordFeedback}
+                onRecordTestReading={handleRecordTestReading}
+                isESP32Online={isESP32Online}
+                lastSeenSeconds={lastSeenSeconds}
+              />
+            )}
 
-          {activeTab === 'plants' && (
-            <Plants selectedPlant={selectedPlant} setSelectedPlant={setSelectedPlant} />
-          )}
+            {activeTab === 'analytics' && (
+              <Analytics 
+                historicalData={historicalData} 
+              />
+            )}
 
-          {activeTab === 'maintenance' && (
-            <Maintenance maintenanceStats={maintenanceStats} />
-          )}
+            {activeTab === 'plants' && (
+              <Plants selectedPlant={selectedPlant} setSelectedPlant={setSelectedPlant} />
+            )}
 
-          {activeTab === 'alerts' && (
-            <Alerts liveData={liveData} maintenanceStats={maintenanceStats} />
-          )}
+            {activeTab === 'maintenance' && (
+              <Maintenance maintenanceStats={maintenanceStats} />
+            )}
 
-          {activeTab === 'settings' && (
-            <Settings isDemoMode={isDemoMode} setIsDemoMode={setIsDemoMode} />
-          )}
-        </main>
+            {activeTab === 'alerts' && (
+              <Alerts liveData={liveData} maintenanceStats={maintenanceStats} />
+            )}
+
+            {activeTab === 'settings' && (
+              <Settings isDemoMode={isDemoMode} setIsDemoMode={setIsDemoMode} />
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
