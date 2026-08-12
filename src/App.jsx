@@ -44,8 +44,9 @@ export default function App() {
   const [selectedPlant, setSelectedPlant] = useState('plant_01');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // Default to Firebase mode if credentials exist, otherwise enable simulator fallback
-  const [isDemoMode, setIsDemoMode] = useState(!isFirebaseConfigured);
+  // Always start in Firebase mode (real data). The simulator is never used in production.
+  // isDemoMode can only become true if explicitly toggled — it is never auto-set.
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [firebaseError, setFirebaseError] = useState(null);
 
@@ -140,7 +141,9 @@ export default function App() {
       unsubs.push(unsubMaint);
 
     } else {
-      // FALLBACK SIMULATOR (When Firebase env variables are not present or Demo mode is toggled)
+      // FALLBACK SIMULATOR — only runs when isDemoMode is explicitly enabled.
+      // This path is NEVER reached in normal production or development usage.
+      // Firebase always initializes with the project config (env vars or hardcoded defaults).
       setIsLoading(false);
       setHistoricalData(getSimulatedHistoricalData(30));
       setMaintenanceStats(getSimulatedMaintenanceData());
