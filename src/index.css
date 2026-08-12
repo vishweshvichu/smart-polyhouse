@@ -226,6 +226,12 @@ body {
   gap: 20px;
 }
 
+.header-timestamp {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .content-container {
   padding: 30px;
   flex-grow: 1;
@@ -281,7 +287,7 @@ body {
 
 .grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(450px, 100%), 1fr));
   gap: 24px;
 }
 
@@ -715,6 +721,9 @@ body {
   }
   .header-subtitle {
     display: none; /* hide on very small screens */
+  }
+  .header-timestamp {
+    display: none; /* hide timestamp on very small screens */
   }
   .header-right {
     width: 100%;

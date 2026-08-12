@@ -5,16 +5,12 @@ import AutomationRuleCard from '../components/AutomationRuleCard';
 import AlertBanner from '../components/AlertBanner';
 import MaintenanceCard from '../components/MaintenanceCard';
 import SensorTrendChart from '../charts/SensorTrendChart';
-import { Cpu, Wind, Droplets, Activity, Zap, Database, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Cpu, Wind, Droplets, Activity, Zap, CheckCircle2, AlertTriangle, WifiOff } from 'lucide-react';
 
 export default function Dashboard({ 
   liveData, 
   historicalData, 
-  maintenanceStats, 
-  isDemoMode,
-  isRecording,
-  recordFeedback,
-  onRecordTestReading,
+  maintenanceStats,
   isESP32Online,
   lastSeenSeconds
 }) {
@@ -26,8 +22,45 @@ export default function Dashboard({
       : lastSeenSeconds < 60
         ? `${lastSeenSeconds}s ago`
         : `${Math.floor(lastSeenSeconds / 60)}m ${lastSeenSeconds % 60}s ago`;
+
+  // Calculate active alerts count for status banner
+  const activeAlerts = [];
+  if (!isESP32Online) activeAlerts.push('ESP32 offline');
+  if (liveData?.temperature > 31) activeAlerts.push('high temperature');
+  if (liveData?.soilMoisture < 30) activeAlerts.push('low soil moisture');
+
+  const systemStatus = !isESP32Online
+    ? { type: 'offline', color: 'var(--accent-danger)', bg: 'rgba(255, 82, 82, 0.08)', border: 'rgba(255, 82, 82, 0.3)', icon: WifiOff, text: 'ESP32 Offline — Check hardware and Wi-Fi connection', sub: `Last seen: ${lastSeenText}` }
+    : activeAlerts.length > 0
+      ? { type: 'warning', color: 'var(--accent-amber)', bg: 'rgba(255, 145, 0, 0.08)', border: 'rgba(255, 145, 0, 0.3)', icon: AlertTriangle, text: `Attention required: ${activeAlerts.length} active alert${activeAlerts.length > 1 ? 's' : ''}`, sub: activeAlerts.join(' · ') }
+      : { type: 'ok', color: 'var(--accent-green-bright)', bg: 'rgba(46, 204, 113, 0.08)', border: 'rgba(46, 204, 113, 0.3)', icon: CheckCircle2, text: 'Smart Polyhouse is running normally', sub: `ESP32 online · Last seen: ${lastSeenText}` };
+
+  const StatusIcon = systemStatus.icon;
+
   return (
     <div>
+      {/* System Status Banner */}
+      <div style={{
+        background: systemStatus.bg,
+        border: `1px solid ${systemStatus.border}`,
+        borderRadius: 'var(--radius-md)',
+        padding: '14px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        marginBottom: '20px'
+      }}>
+        <StatusIcon size={20} style={{ color: systemStatus.color, flexShrink: 0 }} />
+        <div>
+          <div style={{ fontWeight: 700, fontSize: '0.92rem', color: systemStatus.color }}>
+            {systemStatus.text}
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+            {systemStatus.sub}
+          </div>
+        </div>
+      </div>
+
       {/* Alert Banner for active events */}
       <AlertBanner liveData={liveData} maintenanceStats={maintenanceStats} />
 
@@ -47,73 +80,7 @@ export default function Dashboard({
               Real-time ESP32 Wireless Monitoring (Firebase RTDB)
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              id="record-test-reading-dashboard"
-              className="btn-secondary"
-              onClick={onRecordTestReading}
-              disabled={isRecording}
-              style={{
-                fontSize: '0.78rem',
-                padding: '6px 12px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontWeight: 600,
-                background: 'rgba(52, 152, 219, 0.15)',
-                border: '1px solid rgba(52, 152, 219, 0.4)',
-                color: '#3498db',
-                cursor: 'pointer'
-              }}
-            >
-              {isRecording ? (
-                <>
-                  <RefreshCw size={14} className="spin" /> Recording...
-                </>
-              ) : (
-                <>
-                  <Database size={14} /> Record Test Reading
-                </>
-              )}
-            </button>
-            {isDemoMode && (
-              <span style={{
-                background: 'rgba(255, 145, 0, 0.15)',
-                color: 'var(--accent-amber)',
-                padding: '4px 10px',
-                borderRadius: '20px',
-                fontSize: '0.75rem',
-                fontWeight: 700
-              }}>
-                DEMO SIMULATOR ACTIVE
-              </span>
-            )}
-          </div>
         </div>
-
-        {/* Dashboard Test Record Inline Feedback */}
-        {recordFeedback && (
-          <div style={{
-            background: recordFeedback.type === 'success' ? 'rgba(52, 152, 219, 0.12)' : 'rgba(231, 76, 60, 0.15)',
-            border: `1px solid ${recordFeedback.type === 'success' ? 'rgba(52, 152, 219, 0.4)' : 'rgba(231, 76, 60, 0.4)'}`,
-            borderRadius: 'var(--radius-sm)',
-            padding: '10px 14px',
-            fontSize: '0.82rem',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            color: recordFeedback.type === 'success' ? '#3498db' : '#e74c3c'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {recordFeedback.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-              <div>
-                <strong>{recordFeedback.message}</strong>
-              </div>
-            </div>
-            <span style={{ fontSize: '0.72rem', opacity: 0.8 }}>{recordFeedback.time}</span>
-          </div>
-        )}
 
         <div className="grid-3">
           <SensorCard
@@ -147,7 +114,7 @@ export default function Dashboard({
                 <Zap size={20} style={{ color: 'var(--accent-amber)' }} />
                 Hardware Device Status
               </div>
-              <div className="card-subtitle">Real-time actuator & controller heartbeat</div>
+              <div className="card-subtitle">Real-time actuator &amp; controller heartbeat</div>
             </div>
           </div>
 
@@ -213,10 +180,10 @@ export default function Dashboard({
 
         {/* 3. Automatic Control Status Card */}
         <AutomationRuleCard liveData={liveData} />
-      </div >
+      </div>
 
       {/* QUICK ANALYTICS PREVIEW & MAINTENANCE PREVIEW */}
-      < div className="grid-2" >
+      <div className="grid-2">
         <div className="card">
           <div className="card-header">
             <div>
@@ -235,7 +202,7 @@ export default function Dashboard({
           deviceType="fan"
           stats={maintenanceStats.fan}
         />
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }

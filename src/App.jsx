@@ -17,8 +17,7 @@ import { Activity } from 'lucide-react';
 import { 
   readLiveData, 
   subscribeToAnalytics, 
-  subscribeToMaintenance,
-  recordTestReading
+  subscribeToMaintenance
 } from './services/firebaseService';
 import { 
   startSimulation, 
@@ -49,9 +48,6 @@ export default function App() {
   const [isDemoMode, setIsDemoMode] = useState(!isFirebaseConfigured);
   const [isLoading, setIsLoading] = useState(true);
   const [firebaseError, setFirebaseError] = useState(null);
-  
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordFeedback, setRecordFeedback] = useState(null);
 
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -236,85 +232,21 @@ export default function App() {
     }
   };
 
-  const handleRecordTestReading = async () => {
-    setIsRecording(true);
-    setRecordFeedback(null);
-    const now = new Date();
-    
-    if (!isDemoMode && isFirebaseConfigured) {
-      try {
-        const payload = await recordTestReading(selectedPlant);
-        setRecordFeedback({
-          type: 'success',
-          message: `Successfully recorded live values to Firebase historical readings!`,
-          payload,
-          time: now.toLocaleTimeString()
-        });
-        // Auto-clear feedback after 4 seconds
-        setTimeout(() => setRecordFeedback(null), 4500);
-      } catch (err) {
-        console.error("Failed to record test reading to Firebase:", err);
-        setRecordFeedback({
-          type: 'error',
-          message: `Failed to record test reading: ${err.message}`,
-          time: now.toLocaleTimeString()
-        });
-      } finally {
-        setIsRecording(false);
-      }
-    } else {
-      // Demo Mode Fallback
-      try {
-        const timestamp = now.getTime();
-        const dateStr = now.toLocaleDateString();
-        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const newReading = {
-          id: `sim_${timestamp}`,
-          timestamp: timestamp,
-          date: dateStr,
-          time: timeStr,
-          displayDate: timeStr,
-          fullDate: `${dateStr} ${timeStr}`,
-          temperature: Number(liveData.temperature),
-          humidity: Number(liveData.humidity),
-          soilMoisture: Number(liveData.soilMoisture),
-          fanActive: Boolean(liveData.fanActive ?? liveData.fan),
-          pumpActive: Boolean(liveData.pumpActive ?? liveData.pump),
-          fanRuntime: 0,
-          fanActivations: (liveData.fanActive ?? liveData.fan) ? 1 : 0,
-          pumpRuntime: 0,
-          pumpActivations: (liveData.pumpActive ?? liveData.pump) ? 1 : 0
-        };
-        setHistoricalData(prev => [...prev, newReading]);
-        setRecordFeedback({
-          type: 'success',
-          message: `Successfully recorded current simulated live values to local memory!`,
-          payload: newReading,
-          time: now.toLocaleTimeString()
-        });
-        setTimeout(() => setRecordFeedback(null), 4500);
-      } catch (err) {
-        setRecordFeedback({
-          type: 'error',
-          message: `Failed to record simulated test reading.`,
-          time: now.toLocaleTimeString()
-        });
-      } finally {
-        setIsRecording(false);
-      }
-    }
-  };
-
   const pageTitles = {
-    dashboard: { title: 'Polyhouse Dashboard', subtitle: 'Live Precision Environmental Telemetry & Actuator Controls' },
-    analytics: { title: 'Data Analytics', subtitle: 'Historical Time-Series Trends & Operational Cycles' },
-    plants: { title: 'Multi-Plant Management', subtitle: 'Polyhouse Crop Zones & Node Scalability' },
-    maintenance: { title: 'Maintenance Analytics', subtitle: 'Empirical Component Duty Cycle Diagnostics' },
-    alerts: { title: 'Alerts & System Logs', subtitle: 'Real-time Environmental Notifications & System History' },
-    settings: { title: 'System Configuration', subtitle: 'Firebase Connection & ESP32 Hardware Pinout Specs' }
+    dashboard: { title: 'Polyhouse Dashboard', subtitle: 'Live Environmental Telemetry & Actuator Controls' },
+    analytics: { title: 'Data Analytics', subtitle: 'Historical Sensor Trends & Operational Cycles' },
+    plants: { title: 'Plant Management', subtitle: 'Polyhouse Crop Zones & Node Scalability' },
+    maintenance: { title: 'Maintenance & Status', subtitle: 'Component Diagnostics & System Health' },
+    alerts: { title: 'Alerts & Events', subtitle: 'Real-time Environmental Notifications' },
+    settings: { title: 'System Configuration', subtitle: 'Hardware Pinout & Automation Thresholds' }
   };
 
   const currentTitle = pageTitles[activeTab] || pageTitles.dashboard;
+
+  // Calculate active alert count for navbar badge
+  const alertCount = (!isESP32Online ? 1 : 0) +
+    (liveData.temperature > 31 ? 1 : 0) +
+    (liveData.soilMoisture < 30 ? 1 : 0);
 
   if (authLoading) {
     return (
@@ -343,10 +275,10 @@ export default function App() {
           <Activity size={30} style={{ color: '#fff' }} className="spin" />
         </div>
         <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#fff', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
-          Verifying climate Ingress Access...
+          Smart Polyhouse
         </div>
         <div style={{ fontSize: '0.78rem', color: '#648a70', marginTop: '6px', fontFamily: 'monospace' }}>
-          Connecting to Firebase Ingress Sentinel
+          Connecting to Firebase...
         </div>
       </div>
     );
@@ -432,7 +364,7 @@ export default function App() {
           setActiveTab={navigateTo} 
           isOpen={sidebarOpen}
           setIsOpen={setSidebarOpen}
-          alertCount={liveData.temperature > 31 || liveData.soilMoisture < 30 ? 1 : 0}
+          alertCount={alertCount}
           onLogout={handleLogout}
         />
 
@@ -461,10 +393,6 @@ export default function App() {
                 liveData={liveData} 
                 historicalData={historicalData} 
                 maintenanceStats={maintenanceStats}
-                isDemoMode={isDemoMode}
-                isRecording={isRecording}
-                recordFeedback={recordFeedback}
-                onRecordTestReading={handleRecordTestReading}
                 isESP32Online={isESP32Online}
                 lastSeenSeconds={lastSeenSeconds}
               />
@@ -481,7 +409,12 @@ export default function App() {
             )}
 
             {activeTab === 'maintenance' && (
-              <Maintenance maintenanceStats={maintenanceStats} />
+              <Maintenance 
+                maintenanceStats={maintenanceStats}
+                liveData={liveData}
+                isESP32Online={isESP32Online}
+                lastSeenSeconds={lastSeenSeconds}
+              />
             )}
 
             {activeTab === 'alerts' && (
@@ -489,7 +422,7 @@ export default function App() {
             )}
 
             {activeTab === 'settings' && (
-              <Settings isDemoMode={isDemoMode} setIsDemoMode={setIsDemoMode} />
+              <Settings />
             )}
           </main>
         </div>

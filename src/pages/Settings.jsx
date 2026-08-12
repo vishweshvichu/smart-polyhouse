@@ -1,112 +1,34 @@
-import React, { useState } from 'react';
-import { Settings as SettingsIcon, Cpu, Database, Sliders, ShieldCheck, Flame, Send, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import React from 'react';
+import { Cpu, Sliders, ShieldCheck, Info } from 'lucide-react';
 import { HARDWARE_PINS, CONTROL_RULES } from '../utils/constants';
-import { triggerSimulatedAlert } from '../services/simulatorService';
-import { writeSensorData } from '../services/firebaseService';
 
-export default function Settings({ isDemoMode, setIsDemoMode }) {
-  const [isSending, setIsSending] = useState(false);
-  const [writeStatus, setWriteStatus] = useState(null);
-
-  const handleSendTestData = async () => {
-    setIsSending(true);
-    setWriteStatus(null);
-    const now = new Date();
-    const testPayload = {
-      temperature: 29.5,
-      humidity: 65,
-      soilMoisture: 45,
-      fanActive: false,
-      pumpActive: false,
-      timestamp: now.getTime()
-    };
-
-    try {
-      await writeSensorData('plant_01', testPayload);
-      setWriteStatus({
-        type: 'success',
-        message: 'Successfully wrote test data to Firebase (/polyhouse/plant_01/live)!',
-        payload: testPayload,
-        time: now.toLocaleTimeString()
-      });
-    } catch (err) {
-      console.error("Settings Firebase test write error:", err);
-      setWriteStatus({
-        type: 'error',
-        message: `Firebase write error: ${err.message || 'Check database permissions.'}`,
-        time: now.toLocaleTimeString()
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
-
+export default function Settings() {
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff' }}>System Configuration & Hardware Map</h2>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff' }}>System Configuration &amp; Hardware Map</h2>
         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          Firebase credentials, ESP32 pin definitions, and hysteresis control parameters
+          ESP32 pin definitions, automation thresholds, and system configuration reference
         </div>
       </div>
 
-      {/* Real Firebase RTDB Dev Test Section */}
-      <div className="card" style={{ marginBottom: '28px', border: '1px solid rgba(46, 204, 113, 0.3)' }}>
-        <div className="card-header">
-          <div>
-            <div className="card-title" style={{ color: 'var(--accent-green-bright)' }}>
-              <Database size={20} />
-              Real Firebase RTDB Development Test
-            </div>
-            <div className="card-subtitle">
-              Write test dataset to node <code>/polyhouse/plant_01/live</code> in Firebase Realtime Database
-            </div>
-          </div>
-          <button
-            id="settings-send-test-btn"
-            className="btn-primary"
-            onClick={handleSendTestData}
-            disabled={isSending}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
-          >
-            {isSending ? (
-              <>
-                <RefreshCw size={14} className="spin" /> Writing...
-              </>
-            ) : (
-              <>
-                <Send size={14} /> Send Test Data
-              </>
-            )}
-          </button>
+      {/* Info Banner */}
+      <div style={{
+        background: 'rgba(0, 176, 255, 0.08)',
+        border: '1px solid rgba(0, 176, 255, 0.25)',
+        borderRadius: 'var(--radius-md)',
+        padding: '14px 20px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        marginBottom: '28px'
+      }}>
+        <Info size={18} style={{ color: 'var(--accent-blue)', flexShrink: 0, marginTop: '2px' }} />
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <strong style={{ color: '#fff' }}>Configuration Reference:</strong> These values are programmed into the ESP32 firmware. 
+          Thresholds control when the cooling fan and irrigation pump activate automatically. 
+          To change thresholds, update the firmware and re-flash the ESP32.
         </div>
-
-        {writeStatus && (
-          <div style={{
-            background: writeStatus.type === 'success' ? 'rgba(46, 204, 113, 0.12)' : 'rgba(231, 76, 60, 0.15)',
-            border: `1px solid ${writeStatus.type === 'success' ? 'rgba(46, 204, 113, 0.4)' : 'rgba(231, 76, 60, 0.4)'}`,
-            borderRadius: 'var(--radius-sm)',
-            padding: '12px 16px',
-            fontSize: '0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            color: writeStatus.type === 'success' ? '#2ecc71' : '#e74c3c'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {writeStatus.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-              <div>
-                <strong>{writeStatus.message}</strong>
-                {writeStatus.payload && (
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
-                    Payload: {JSON.stringify(writeStatus.payload)}
-                  </div>
-                )}
-              </div>
-            </div>
-            <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>{writeStatus.time}</span>
-          </div>
-        )}
       </div>
 
       <div className="grid-2" style={{ marginBottom: '28px' }}>
@@ -117,7 +39,7 @@ export default function Settings({ isDemoMode, setIsDemoMode }) {
               <Cpu size={20} style={{ color: 'var(--accent-green-bright)' }} />
               ESP32 Pinout Connections
             </div>
-            <div className="card-subtitle">Exact GPIO mapping configured in hardware</div>
+            <div className="card-subtitle">GPIO mapping configured in hardware</div>
           </div>
 
           <div className="table-responsive">
@@ -172,75 +94,94 @@ export default function Settings({ isDemoMode, setIsDemoMode }) {
               <Sliders size={20} style={{ color: 'var(--accent-amber)' }} />
               Automation Hysteresis Thresholds
             </div>
+            <div className="card-subtitle">Configured trigger points — read-only reference</div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '14px', borderRadius: '10px' }}>
-              <div style={{ fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Fan Automation Rules</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                • <strong style={{ color: 'var(--accent-danger)' }}>ON Threshold:</strong> Temperature &gt; {CONTROL_RULES.fan.onThreshold}°C<br/>
-                • <strong style={{ color: 'var(--accent-green-bright)' }}>OFF Threshold:</strong> Temperature &lt; {CONTROL_RULES.fan.offThreshold}°C
+            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: '10px', borderLeft: '3px solid var(--accent-blue)' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                CONFIGURATION
+              </div>
+              <div style={{ fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Fan Automation Rules</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div>
+                  • <strong style={{ color: 'var(--accent-danger)' }}>ON Threshold:</strong> Temperature &gt; {CONTROL_RULES.fan.onThreshold}°C
+                </div>
+                <div>
+                  • <strong style={{ color: 'var(--accent-green-bright)' }}>OFF Threshold:</strong> Temperature &lt; {CONTROL_RULES.fan.offThreshold}°C
+                </div>
               </div>
             </div>
 
-            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '14px', borderRadius: '10px' }}>
-              <div style={{ fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Pump Automation Rules</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                • <strong style={{ color: 'var(--accent-amber)' }}>ON Threshold:</strong> Soil Moisture &lt; {CONTROL_RULES.pump.onThreshold}%<br/>
-                • <strong style={{ color: 'var(--accent-green-bright)' }}>OFF Threshold:</strong> Soil Moisture &gt; {CONTROL_RULES.pump.offThreshold}%
+            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: '10px', borderLeft: '3px solid var(--accent-blue)' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                CONFIGURATION
+              </div>
+              <div style={{ fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Pump Automation Rules</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div>
+                  • <strong style={{ color: 'var(--accent-amber)' }}>ON Threshold:</strong> Soil Moisture &lt; {CONTROL_RULES.pump.onThreshold}%
+                </div>
+                <div>
+                  • <strong style={{ color: 'var(--accent-green-bright)' }}>OFF Threshold:</strong> Soil Moisture &gt; {CONTROL_RULES.pump.offThreshold}%
+                </div>
               </div>
             </div>
 
-            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '14px', borderRadius: '10px' }}>
-              <div style={{ fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Soil Moisture ADC Calibration</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                AIR_VALUE = {CONTROL_RULES.calibration.airValue} (Dry 0%)<br/>
-                WATER_VALUE = {CONTROL_RULES.calibration.waterValue} (Wet 100%)
+            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: '10px', borderLeft: '3px solid var(--accent-amber)' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-amber)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                CALIBRATION
+              </div>
+              <div style={{ fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Soil Moisture ADC Calibration</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div>AIR_VALUE = {CONTROL_RULES.calibration.airValue} <span style={{ fontFamily: 'var(--font-main)', color: 'var(--text-muted)', fontSize: '0.78rem' }}>(Dry 0%)</span></div>
+                <div>WATER_VALUE = {CONTROL_RULES.calibration.waterValue} <span style={{ fontFamily: 'var(--font-main)', color: 'var(--text-muted)', fontSize: '0.78rem' }}>(Wet 100%)</span></div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Presentation & Simulation Controls */}
+      {/* Firebase Connection Reference */}
       <div className="card">
         <div className="card-header">
           <div className="card-title">
-            <Flame size={20} style={{ color: 'var(--accent-amber)' }} />
-            Hackathon Live Interactive Simulation Controls
+            <ShieldCheck size={20} style={{ color: 'var(--accent-green-bright)' }} />
+            Firebase Database Structure Reference
           </div>
-          <div className="card-subtitle">Test realtime state changes and alert triggers</div>
+          <div className="card-subtitle">Real-time database path architecture</div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '10px' }}>
-          <button 
-            className="btn-secondary"
-            onClick={() => triggerSimulatedAlert('high_temp')}
-          >
-            Spike Temp (&gt; 31°C) ➔ Trigger Fan
-          </button>
-
-          <button 
-            className="btn-secondary"
-            onClick={() => triggerSimulatedAlert('low_soil')}
-          >
-            Drop Soil (&lt; 30%) ➔ Trigger Pump
-          </button>
-
-          <button 
-            className="btn-secondary"
-            onClick={() => triggerSimulatedAlert('offline')}
-          >
-            Simulate ESP32 Disconnect
-          </button>
-
-          <button 
-            className="btn-primary"
-            onClick={() => triggerSimulatedAlert('online')}
-          >
-            Reset to Nominal Online
-          </button>
+        <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '16px' }}>
+          The Smart Polyhouse uses Firebase Realtime Database for all sensor telemetry and actuator state synchronization:
         </div>
+
+        <pre style={{
+          background: 'rgba(0,0,0,0.4)',
+          padding: '16px',
+          borderRadius: 'var(--radius-md)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.82rem',
+          color: 'var(--accent-green-bright)',
+          overflowX: 'auto',
+          border: '1px solid var(--border-color)',
+          lineHeight: 1.7
+        }}>
+          {`polyhouse/
+├── plant_01/
+│   ├── live/             ← ESP32 realtime sensor + actuator data
+│   │   ├── temperature   ← DHT22 reading (°C)
+│   │   ├── humidity      ← DHT22 reading (%)
+│   │   ├── soilMoisture  ← Capacitive sensor (%)
+│   │   ├── fan           ← Fan relay state (bool)
+│   │   ├── pump          ← Pump relay state (bool)
+│   │   ├── lastSeen      ← Heartbeat timestamp (ms)
+│   │   └── timestamp     ← Data timestamp (ms)
+│   ├── analytics/
+│   │   └── readings/     ← Historical timestamped readings
+│   └── maintenance/      ← Runtime + activation counters
+└── users/{uid}/          ← Firebase Auth user profiles`}
+        </pre>
       </div>
     </div>
   );
