@@ -189,8 +189,13 @@ body {
   background: radial-gradient(circle at 80% 20%, rgba(46, 204, 113, 0.04) 0%, transparent 60%);
 }
 
+/* =====================================================
+   HEADER — responsive, never clips or overflows
+   ===================================================== */
 .header {
-  height: var(--header-height);
+  /* Allow height to grow when wrapping on small screens */
+  min-height: var(--header-height);
+  height: auto;
   background: var(--bg-glass);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
@@ -198,32 +203,61 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
+  gap: 16px;
   position: sticky;
   top: 0;
   z-index: 90;
+  /* Prevent any child from forcing horizontal overflow */
+  overflow: hidden;
 }
 
+/* Left side: hamburger + title group — takes all available space */
 .header-left {
   display: flex;
   align-items: center;
   gap: 16px;
+  /* Critical: flex: 1 means it fills remaining space;
+     min-width: 0 allows it to shrink below its content size */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
+/* Title group: stacks title + subtitle vertically */
+.header-title-group {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Page title — scales with viewport, never forces overflow */
 .header-title-group h1 {
-  font-size: 1.4rem;
+  font-size: clamp(0.95rem, 2.5vw, 1.4rem);
   font-weight: 700;
   color: var(--text-primary);
+  /* Allow wrapping on narrow screens; do NOT use nowrap here */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
+/* Subtitle — scales and wraps */
 .header-subtitle {
-  font-size: 0.8rem;
+  font-size: clamp(0.68rem, 1.8vw, 0.8rem);
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  margin-top: 2px;
 }
 
+/* Right side: plant selector + ESP32 status + timestamp */
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+  /* Never shrink smaller than needed for its contents */
+  flex-shrink: 0;
 }
 
 .header-timestamp {
@@ -437,17 +471,19 @@ body {
 
 .rule-pills {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .rule-pill {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  padding: 4px 10px;
+  font-size: 0.78rem;
+  padding: 4px 8px;
   border-radius: 6px;
   background: var(--bg-secondary);
   border: 1px solid rgba(255,255,255,0.08);
+  /* Wrap long pill text instead of overflowing */
+  word-break: break-word;
 }
 
 .rule-pill.on {
@@ -516,15 +552,18 @@ body {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  padding: 8px 16px;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   font-weight: 600;
   font-family: var(--font-main);
+  font-size: 0.82rem;
   outline: none;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  /* Constrain width so it never pushes the title area off-screen */
+  max-width: 200px;
+  min-width: 0;
+  /* Truncate long option text */
+  text-overflow: ellipsis;
 }
 
 /* Table Styling */
@@ -655,16 +694,16 @@ body {
     justify-content: center;
   }
 
-  /* Header adjustments */
+  /* Header: keep side-by-side but tighter */
   .header {
     padding: 0 16px;
-    gap: 8px;
+    gap: 10px;
+    /* Allow wrapping so right side can drop below on narrow tablets */
     flex-wrap: nowrap;
   }
   .header-right {
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
   }
 
   /* Grid layouts collapse to single column */
@@ -698,29 +737,73 @@ body {
   }
 }
 
+/* ---- Medium phones / narrow tablets: 640px and below ---- */
+@media (max-width: 640px) {
+  /* Header wraps: left area on top row, right controls on second row */
+  .header {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .header-left {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 10px;
+    align-items: center;
+  }
+  .header-title-group h1 {
+    font-size: clamp(0.88rem, 3.5vw, 1.15rem);
+  }
+  .header-subtitle {
+    font-size: 0.72rem;
+  }
+  /* Right side: full width row, left-aligned */
+  .header-right {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  /* Plant selector: limit width */
+  .plant-select-dropdown {
+    max-width: 180px;
+    font-size: 0.78rem;
+    padding: 6px 10px;
+  }
+}
+
 /* ---- Small phones: 430px and below ---- */
 @media (max-width: 430px) {
   .header {
-    height: auto;
-    min-height: var(--header-height);
-    padding: 10px 12px;
     flex-wrap: wrap;
+    padding: 10px 12px;
     gap: 6px;
+    align-items: flex-start;
   }
   .header-left {
-    gap: 10px;
+    gap: 8px;
     min-width: 0;
-    flex: 1;
+    flex: 1 1 auto;
+    align-items: center;
   }
   .header-title-group h1 {
-    font-size: 1rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
+    /* clamp: min 0.85rem, scales with viewport, max 1.05rem */
+    font-size: clamp(0.85rem, 4vw, 1.05rem);
+    /* Allow wrapping so title is never clipped */
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: none;
+    line-height: 1.25;
   }
   .header-subtitle {
-    display: none; /* hide on very small screens */
+    /* Show but small */
+    font-size: 0.68rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
   .header-timestamp {
     display: none; /* hide timestamp on very small screens */
@@ -728,8 +811,15 @@ body {
   .header-right {
     width: 100%;
     justify-content: flex-start;
-    gap: 6px;
+    gap: 8px;
+    flex-wrap: wrap;
     font-size: 0.78rem;
+  }
+  /* Plant selector: compact on small phones */
+  .plant-select-dropdown {
+    max-width: 150px;
+    font-size: 0.75rem;
+    padding: 5px 8px;
   }
 
   /* Sensor cards: full width */
@@ -789,8 +879,10 @@ body {
 /* ---- Tiny phones: 360px and below ---- */
 @media (max-width: 360px) {
   .header-title-group h1 {
-    font-size: 0.9rem;
-    max-width: 160px;
+    font-size: clamp(0.78rem, 4.5vw, 0.95rem);
+  }
+  .header-subtitle {
+    font-size: 0.64rem;
   }
   .sensor-value {
     font-size: 1.9rem;
